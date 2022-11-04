@@ -162,28 +162,38 @@ public class Escenario {
 		return estado;
 	}
 
-
-
 	public long tiempoTrascurrido() {
 		return ChronoUnit.SECONDS.between(inicio, LocalDateTime.now());
 
 	}
 
-	public List<Imagen> devuelveImagenes() {
+	public List<Imagen> devuelveImagenes() throws ClassNotFoundException {
 		List<Imagen> imagenes = new ArrayList<Imagen>();
 		for (int i = 0; i < this.getAlto(); i++) {
 			for (int j = 0; j < this.getAncho(); j++) {
 				Posicion pos = new Posicion(j, i);
+
 				if (this.isCerrada(j, i)) {
 					imagenes.add(new Imagen("imagenes/zona-cerrada.png", j, i));
 				}
-				if (this.devolverComando(pos) != null) {
-					imagenes.add(new Imagen("imagenes/comando.png", j, i));
+				Comando com = this.devolverComando(pos);
+				if (com != null) {
+
+					if (Class.forName("comandos.personajes.ComandoAlfa").isInstance(com)) {
+						imagenes.add(new Imagen("imagenes/comando-alfa.png", j, i));
+					} else if (Class.forName("comandos.personajes.ComandoHalcon").isInstance(com)) {
+						imagenes.add(new Imagen("imagenes/comando-halcon.png", j, i));
+					} else if (Class.forName("comandos.personajes.ComandoAlacran").isInstance(com)) {
+						imagenes.add(new Imagen("imagenes/comando-alacran.png", j, i));
+					} else if (Class.forName("comandos.personajes.Comando").isInstance(com)) {
+						imagenes.add(new Imagen("imagenes/comando.png", j, i));
+					}
+
 				}
 				if (this.hasVentana(j, i)) {
 					imagenes.add(new Imagen("imagenes/ventana.png", j, i));
 				} else {
-					imagenes.add(new Imagen("imagenes/ladrillos.png", j, i));
+					// imagenes.add(new Imagen("imagenes/ladrillos.png", j, i));
 				}
 				if (this.devolverBomba(pos) != null) {
 					imagenes.add(new Imagen("imagenes/bomba.png", j, i));
@@ -220,9 +230,9 @@ public class Escenario {
 		}
 		return null;
 	}
-
+/*
 	// Opción A: Inserto sí o sí, siempre que haya al menos una posición libre
-	public boolean introducirComando(int numBombas) {
+	public boolean introducirComando(int numBombas, TipoComando tipo) {
 		List<Posicion> posicionesAbiertas = new ArrayList<Posicion>();
 		// Buscamos las posiciones abiertas
 		for (int i = 0; i < getAncho(); i++) {
@@ -241,17 +251,42 @@ public class Escenario {
 		// y obtengo la componente x de la posición contenida en esa posición de la
 		// lista
 		Random gen = new Random();
-		int posComando = gen.nextInt(posicionesAbiertas.size());
-		Posicion posi = new Posicion(posicionesAbiertas.get(posComando).getX(), getAlto() - 1);
-		Comando com = new Comando(numBombas);
+		int posComandoX = gen.nextInt(posicionesAbiertas.size());
+		Posicion posi = new Posicion(posicionesAbiertas.get(posComandoX).getX(), getAlto() - 1);
+		Comando com = null;
+		switch (tipo) {
+		case BASICO: {
+			com = new Comando(numBombas);
+			break;
+		}
+		case ALFA: {
+			com = new ComandoAlfa(numBombas);
+			// casting, decirle a la variable com que es de tipo ComandoAlfa para poder
+			// llamar al metodo setAlturaEdificio
+			((ComandoAlfa) com).setAlturaEdificio(getAlto() - 1);
+			break;
+		}
+		case ALACRAN: {
+			com = new ComandoAlacran(numBombas);
+			break;
+		}
+		case HALCON: {
+			com = new ComandoHalcon(numBombas);
+			((ComandoHalcon) com).setAnchoEdificio(getAncho() - 1);
+			break;
+		}
+		default:
+			throw new IllegalArgumentException("Unexpected value: " + tipo);
+		}
 		com.addHistoricoPosiciones(posi);
 		this.comandos.add(com);
 		return true;
 	}
+	*/
 
 	// Opción B sólo inserto un comando si la generación del número aleatorio me
 	// produce una posición libre
-	public boolean introducirComandoOpcionB(int numBombas) {
+	public boolean introducirComandoOpcionB(int numBombas, TipoComando tipo) {
 		boolean hayPosicionLibre = false;
 		// Buscamos las posiciones abiertas
 		for (int i = 0; i < getAncho(); i++) {
@@ -270,10 +305,34 @@ public class Escenario {
 		// y obtengo la componente x de la posición contenida en esa posición de la
 		// lista
 		Random gen = new Random();
-		int posComando = gen.nextInt(getAncho());
-		Posicion posi = new Posicion(posComando, getAlto() - 1);
+		int posComandoX = gen.nextInt(getAncho());
+		Posicion posi = new Posicion(posComandoX, getAlto() - 1);
 		if (devolverComando(posi) == null && !isCerrada(posi)) {
-			Comando com = new Comando(numBombas);
+			Comando com = null;
+			switch (tipo) {
+			case BASICO: {
+				com = new Comando(numBombas);
+				break;
+			}
+			case ALFA: {
+				com = new ComandoAlfa(numBombas);
+				// casting, decirle a la variable com que es de tipo ComandoAlfa para poder
+				// llamar al metodo setAlturaEdificio
+				((ComandoAlfa) com).setAlturaEdificio(getAlto() - 1);
+				break;
+			}
+			case ALACRAN: {
+				com = new ComandoAlacran(numBombas);
+				break;
+			}
+			case HALCON: {
+				com = new ComandoHalcon(numBombas);
+				((ComandoHalcon) com).setAnchoEdificio(getAncho() - 1);
+				break;
+			}
+			default:
+				throw new IllegalArgumentException("Unexpected value: " + tipo);
+			}
 			com.addHistoricoPosiciones(posi);
 			this.comandos.add(com);
 			return true;
@@ -281,12 +340,68 @@ public class Escenario {
 		return false;
 
 	}
-
-	public void disparar() {
-		if (this.hasVentana(this.arma)) {
-			comandos.remove(this.devolverComando(this.arma));
+	public boolean introducirComando(Comando com) throws ClassNotFoundException {
+		List<Posicion> posicionesAbiertas = new ArrayList<Posicion>();
+		// Buscamos las posiciones abiertas
+		for (int i = 0; i < getAncho(); i++) {
+			Posicion pos = new Posicion(i, getAlto() - 1);
+			if (devolverComando(pos) == null && !isCerrada(pos)) {
+				posicionesAbiertas.add(pos);
+			}
 		}
+		
+		// Si no hay ninguna posición abierta termino
+		if (posicionesAbiertas.isEmpty()) {
+			return false;
+		}
+		// Genero un número aleatorio entre 0 y el tamaño de la lista que contiene solo
+		// posiciones disponibles
+		// y obtengo la componente x de la posición contenida en esa posición de la
+		// lista
+		if (Class.forName("comandos.personajes.ComandoAlfa").isInstance(com)) {
+			((ComandoAlfa) com).setAlturaEdificio(getAlto() - 1);
+		}
+		if (Class.forName("comandos.personajes.ComandoHalcon").isInstance(com)) {
+			((ComandoHalcon) com).setAnchoEdificio(getAncho() - 1);
+		}
+		
+		Random gen = new Random();
+		int posComandoX = gen.nextInt(posicionesAbiertas.size());
+		Posicion posi = new Posicion(posicionesAbiertas.get(posComandoX).getX(), getAlto() - 1);
+		com.addHistoricoPosiciones(posi);
+		this.comandos.add(com);
+		return true;
+	}
+
+	public void disparar() throws ClassNotFoundException, CloneNotSupportedException {
+		boolean alacranMuerto = false;
+		if (this.hasVentana(this.arma)) {
+			Comando com = this.devolverComando(this.arma);
+			if (com != null) {
+				Comando comRenacido = (Comando) com.clone();
+				if (Class.forName("comandos.personajes.ComandoHalcon").isInstance(com)) {
+					int vidasDisponibles = ((ComandoHalcon) com).restaVidasDisponibles(1);
+					if (vidasDisponibles == 0) {
+						comandos.remove(com);
+						introducirComando(comRenacido);
+					}
+				} else if (Class.forName("comandos.personajes.ComandoAlacran").isInstance(com)) {
+					alacranMuerto = true;
+					comandos.remove(com);
+					introducirComando(comRenacido);
+
+				} else {
+					comandos.remove(com);
+					introducirComando(comRenacido);
+				}
+				
+			}
+		}
+
 		bombas.remove(this.devolverBomba(this.arma));
+		if (alacranMuerto) {
+			bombas.add(this.arma);
+		}
 	}
 
 	private List<Direccion> getDireccionesPosibles(Comando com) {
@@ -362,6 +477,9 @@ public class Escenario {
 		bombas = resultado;
 	}
 
+//en el ultimo parrafo, en el escenario hay que comprobar que la decision tomada por el comando
+//es correcta,y se ha eliminado el && !isCerrada(pos) de decisionMovimientoCorrecta para permitir que
+//el comando alacran pueda pasar por zonas cerradas
 	private void verificaDecisiones(Comando com, Contexto contexto, Decision decision) {
 		if (decisionTirarBombaCorrecta(decision, com, contexto)) {
 			bombas.add(com.getPosicionActual());
@@ -378,7 +496,7 @@ public class Escenario {
 		if (decision != null && decision.getDirMovimiento() != null) {
 			Posicion pos = com.getPosicionActual().adyacente(decision.getDirMovimiento());
 			HashSet<Posicion> posComandos = devuelvePosicionComandos();
-			if (isPosicionValida(pos) && !isCerrada(pos) && !posComandos.contains(pos)) {
+			if (isPosicionValida(pos) /* && !isCerrada(pos) */ && !posComandos.contains(pos)) {
 				return pos;
 			}
 		}

@@ -7,8 +7,9 @@ import comandos.personajes.Contexto;
 import comandos.personajes.Decision;
 import comandos.estructura.Direccion;
 import comandos.estructura.Posicion;
+import comandos.estructura.TipoComando;
 
-public class Comando {
+public class Comando implements Cloneable{
 
 	private Posicion posicionActual;
 	private HashSet<Posicion> historicoPosiciones;
@@ -16,18 +17,25 @@ public class Comando {
 	private final int numBombas;
 	private int numBombasDis;
 	private HashSet<Posicion> ventanasConocidas;
-
+	protected TipoComando tipo;
+	
 	public Comando(int numBombas) {
 		posicionActual = null;
 		this.historicoPosiciones = new HashSet<Posicion>();
 		this.numBombas = numBombas;
 		this.numBombasDis = numBombas;
 		this.ventanasConocidas = new HashSet<Posicion>();
+		this.tipo=TipoComando.BASICO;
 
 	}
 
 	public Posicion getPosicionActual() {
 		return posicionActual;
+	}
+	
+
+	public int getNumBombas() {
+		return numBombas;
 	}
 
 	public boolean addHistoricoPosiciones(Posicion p) {
@@ -63,9 +71,25 @@ public class Comando {
 	public int getNumBombasDis() {
 		return numBombasDis;
 	}
+	
+	public TipoComando getTipo() {
+		return tipo;
+	}
 
 	public void bombaLiberada() {
 		this.numBombasDis -= 1;
 	}
+//el metodo introducir comando hay que pasarle un comando?
+	
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		
+		Comando com = (Comando) super.clone();
+		com.numBombasDis=this.numBombas;
+		return com;
+	}
 
+	
+	
+	
 }
